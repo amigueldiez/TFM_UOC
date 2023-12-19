@@ -28,6 +28,7 @@ Actualmente, este repositorio contiene:
   - main.py: desde donde se pueden llamar todas las funciones desarrolladas.
   - Github_ListarDescargar.py: empleando la API de GitHub, se encarga de listar los archivos de un repositorio y descargarlos.
   - LecturaEDA_PCA_TUNNING.py: se encarga de todas las operaciones relacionadas con el Análisis Exploratorio y técnicas de reducción de dimensionalidad.
+  - StreamRiver.py: simula el stream de datos e implementa los diferentes modelos y métodos de data streaming.
   - Reloxo.py: contiene una clase para controlar el tiempo de ejecución de las funciones.
 
 ## Dataset Empleado: 
