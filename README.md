@@ -40,8 +40,9 @@ Para el presente TFM, se ha empleado el dataset Time-series Industrial Anomaly d
   URL={https://github.com/ari-dasci/OD-TINA}
 }
 
-### Recursos Empleados: 
+## Recursos Empleados: 
 El lenguaje empleado es Python junto con la librería River para realizar ML online.
-### Enlaces:
+
+## Enlaces:
 1. [UOC](https://www.uoc.edu/portal/es/index.html)
 
