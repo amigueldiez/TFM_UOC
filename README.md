@@ -31,7 +31,14 @@ Actualmente, este repositorio contiene:
   - Reloxo.py: contiene una clase para controlar el tiempo de ejecución de las funciones.
 
 ## Dataset Empleado: 
-Sirve para mostrar el número de ocurrencias de cada nivel de una variable, por lo tanto se trata de una variable categórica. Los datos deberían tener forma de una tabla de frecuencias absolutas o relativas.
+Para el presente TFM, se ha empleado el dataset Time-series Industrial Anomaly dataset (TiNA), un conjunto de datos de series temporales para detección de anomalías dentro de un contexto industrial. El conjunto de datos contiene información de sensórica de una máquina de minería perteneciente a la compañía ArcelorMittal.
+
+@misc{tina_dasci_arcelor
+  title={Time-series Industrial Anomaly dataset},
+  authors={Ignacio Aguilera-Martos and David López and Marta García-Barzana and Julián Luengo and Francisco Herrera},
+  year={2022},
+  URL={https://github.com/ari-dasci/OD-TINA}
+}
 
 ### Recursos Empleados: 
 El lenguaje empleado es Python junto con la librería River para realizar ML online.
