@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Dec 16 11:32:13 2023
-
 @author: pablo
 """
 import setupInicial
