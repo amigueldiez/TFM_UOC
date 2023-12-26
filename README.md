@@ -50,4 +50,5 @@ El lenguaje empleado es Python junto con la librería River para realizar ML onl
 ## Enlaces:
 1. [UOC](https://www.uoc.edu/portal/es/index.html)
 2. [TINA dataset](https://dasci.es/transferencia/open-data/tina-dataset/)
+3. [River library](https://riverml.xyz/latest/)
 
