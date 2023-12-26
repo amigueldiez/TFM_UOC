@@ -25,11 +25,14 @@ Con ello, se busca dotar de herramientas al personal de empresas industriales de
 
 ## Descripción del contenido: 
 Actualmente, este repositorio contiene:
-  - main.py: desde donde se pueden llamar todas las funciones desarrolladas.
-  - Github_ListarDescargar.py: empleando la API de GitHub, se encarga de listar los archivos de un repositorio y descargarlos.
-  - LecturaEDA_PCA_TUNNING.py: se encarga de todas las operaciones relacionadas con el Análisis Exploratorio y técnicas de reducción de dimensionalidad.
+  - main.py: desde donde se pueden ejecutar todas las funciones desarrolladas.
+  - setupInicial.py: creación del sistema de carpetas.
+  - reloxo.py: contiene una clase para controlar el tiempo de ejecución de las funciones.
+  - githubInteraccion.py: empleando la API de GitHub, se encarga de listar los archivos de un repositorio y descargarlos.
+  - transformarEDA.py: se encarga de todas las operaciones relacionadas con el tratamiento de los datos y el Análisis Exploratorio.
+  - pcaLDA.py: técnicas de reducción de dimensionalidad PCA y LDA.
+  - afinadoHiperparametros: se hace un primer afinado de los modelos a emplear (regresión logística (RL), Naive-Bayes (NB) y árbol de decisión (DT).
   - StreamRiver.py: simula el stream de datos e implementa los diferentes modelos y métodos de data streaming.
-  - Reloxo.py: contiene una clase para controlar el tiempo de ejecución de las funciones.
 
 ## Dataset Empleado: 
 Para el presente TFM, se ha empleado el dataset Time-series Industrial Anomaly dataset (TiNA), un conjunto de datos de series temporales para detección de anomalías dentro de un contexto industrial. El conjunto de datos contiene información de sensórica de una máquina de minería perteneciente a la compañía ArcelorMittal.
