@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Dec 16 11:51:46 2023
-
 @author: pablo
 """
+
 import time
 from datetime import datetime
 
@@ -12,11 +11,11 @@ class ElapsedTimer(object):
         self.start_time = time.time()
     def elapsed(self,sec):
         if sec < 60:
-            return str(sec) + " sec"
+            return str(round(sec,2)) + " sec"
         elif sec < (60 * 60):
-            return str(sec / 60) + " min"
+            return str(round(sec / 60,2)) + " min"
         else:
-            return str(sec / (60 * 60)) + " hr"
+            return str(round(sec / (60 * 60)),2) + " hr"
     def elapsed_time(self):
         return self.elapsed(time.time() - self.start_time)
     def current_time(self):

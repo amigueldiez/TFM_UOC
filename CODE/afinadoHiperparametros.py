@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Dec 10 11:51:09 2023
-
 @author: pablo
 """
 
@@ -37,7 +35,7 @@ def afinadoRL(dataset, objetivo):
     gs = GridSearchCV(cLR, parameters)
     gs.fit(X_train, y_train)
     
-    print("MEJOR SCORE - TRAIN: ", gs.best_score_)
+    print("MEJOR SCORE - TRAIN: ", round(gs.best_score_,2))
     print("MEJORES PARÁMETROS - TRAIN: ", gs.best_params_)
     
     y_pred=gs.best_estimator_.predict(X_train)
@@ -52,9 +50,9 @@ def afinadoRL(dataset, objetivo):
     plt.show()
     
     y_pred=gs.best_estimator_.predict(X_test)
-    print("ACCURACY SCORE - TEST: ", accuracy_score(y_test, y_pred))
+    print("ACCURACY SCORE - TEST: ", round(accuracy_score(y_test, y_pred),2))
     print("MODELADO RL FINALIZADO - %s" % (tempo.elapsed_time()))
-    joblib.dump(gs,"OUT/MODELS/Afinado_RL_"+objetivo+".joblib")
+    joblib.dump(gs,"OUT/MODELS/afinado_RL_"+objetivo+".joblib")
     return gs
 
 def afinadoNB(dataset, objetivo):
@@ -75,7 +73,7 @@ def afinadoNB(dataset, objetivo):
     gs = GridSearchCV(cNB, parameters)
     gs.fit(X_train, y_train)
     
-    print("MEJOR SCORE: ", gs.best_score_)
+    print("MEJOR SCORE: ", round(gs.best_score_,2))
     print("MEJORES PARÁMETROS: ", gs.best_params_)
     
     y_pred=gs.best_estimator_.predict(X_train)
@@ -90,9 +88,9 @@ def afinadoNB(dataset, objetivo):
     plt.show()
     
     y_pred=gs.best_estimator_.predict(X_test)
-    print("ACCURACY SCORE - TEST: ", accuracy_score(y_test, y_pred))
+    print("ACCURACY SCORE - TEST: ", round(accuracy_score(y_test, y_pred),2))
     print("MODELADO NB FINALIZADO - %s" % (tempo.elapsed_time()))
-    joblib.dump(gs,"OUT/MODELS/Afinado_NB_"+objetivo+".joblib")
+    joblib.dump(gs,"OUT/MODELS/afinado_NB_"+objetivo+".joblib")
     return gs
 
 def afinadoDT(dataset, objetivo):
@@ -112,7 +110,7 @@ def afinadoDT(dataset, objetivo):
     gs = GridSearchCV(cDT, parameters)
     gs.fit(X_train, y_train)
     
-    print("MEJOR SCORE: ", gs.best_score_)
+    print("MEJOR SCORE: ", round(gs.best_score_,2))
     print("MEJORES PARÁMETROS: ", gs.best_params_)
     
     y_pred=gs.best_estimator_.predict(X_train)
@@ -127,8 +125,8 @@ def afinadoDT(dataset, objetivo):
     plt.show()
     
     y_pred=gs.best_estimator_.predict(X_test)
-    print("ACCURACY SCORE - TEST: ", accuracy_score(y_test, y_pred))
+    print("ACCURACY SCORE - TEST: ", round(accuracy_score(y_test, y_pred),2))
     print("MODELADO DT FINALIZADO - %s" % (tempo.elapsed_time()))
-    joblib.dump(gs,"OUT/MODELS/Afinado_DT_"+objetivo+".joblib")
+    joblib.dump(gs,"OUT/MODELS/afinado_DT_"+objetivo+".joblib")
     return gs
 

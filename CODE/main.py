@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Dec 16 11:32:13 2023
-
 @author: pablo
 """
+
+"""
+A veces hay alguna imcompatibilidad entre versiones, si pasa se recomienda:
+pip install seaborn pandas matplotlib numpy --upgrade --user
+"""
+
 import setupInicial
 import reloxo
 import githubInteraccion
@@ -63,7 +67,7 @@ if __name__ == '__main__':
     if "datos_agregados.csv" in files_in_local:
         files_in_local.remove("datos_agregados.csv")
     
-    transformarEDA.agregarDatosTandas(files_in_local, chunk_size=300)
+    transformarEDA.agregarDatosTandas(files_in_local, chunk_size=500)
     print("FIN AGREGACIÓN ARCHIVOS...")
 
 #%% EDA con archivos locales offline
@@ -120,11 +124,11 @@ if __name__ == '__main__':
 
     flujo, w_size=streamRiver.modoTrabajo(seleccion)
     #objetivos=["m_id","alarms","m_subid"]
-    objetivo="m_id"
+    objetivos=["m_id"]
     for objetivo in objetivos:
-        modeloRL, matrizConfusionRL=streamRiver.modeloLogistico(flujo, objetivo)
+        #modeloRL, matrizConfusionRL=streamRiver.modeloLogistico(flujo, objetivo)
         modeloNB, matrizConfusionNB=streamRiver.modeloProbabilistico(flujo, objetivo)
-        modeloDT, matrizConfusionDT=streamRiver.modeloArbol(flujo, objetivo)
+        #modeloDT, matrizConfusionDT=streamRiver.modeloArbol(flujo, objetivo)
     #si detectaamos uno, no hacemos nada, si detectamos varios seguidos
     #definimos ventana. umbral de ventana
     #anomalía de las entradas, anomalía de las salidas

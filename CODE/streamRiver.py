@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Dec 16 12:01:11 2023
-
 @author: pablo
 """
 
@@ -11,6 +9,7 @@ import os
 from river import stream, preprocessing, compose, linear_model, multiclass, metrics, naive_bayes, tree
 import itertools
 import plotPerformance
+import joblib
 
 #%%
 
@@ -133,17 +132,20 @@ def modeloProbabilistico(files, objetivo, admite_cualitativo=False):
                 acc.update(target, y_pred)
             if count % 10000==0:
                 
-                print(f'Accuracy para {file} - Objetivo: {objetivo.upper()}: {acc.get()} - Muestras analizadas: {muestras_analizadas + count}')
+                print(f'Accuracy para {file} - Objetivo: {objetivo.upper()}: {round(acc.get(),2)} - Muestras analizadas: {muestras_analizadas + count}')
             if ((count >0) and (count % 10000==0)):
                 grafica.process_data_point(count, acc.get())
         
         muestras_analizadas=muestras_analizadas + count
         grafica.process_data_point(count, acc.get())
+        
                 
-        print(f'Accuracy final para {file} - Objetivo: {objetivo.upper()}: {acc.get()}')
+        print(f'Accuracy final para {file} - Objetivo: {objetivo.upper()}: {round(acc.get(),2)}')
                 
-    print(f'Accuracy final modelo - Objetivo: {objetivo.upper()}: {acc.get()}')
+    print(f'Accuracy final modelo - Objetivo: {objetivo.upper()}: {round(acc.get(),2)}')
     grafica.process_data_point(count, acc.get())
+    grafica.save_plot("streaming_NB_"+objetivo)
+    joblib.dump(model,"OUT/MODELS/streaming_NB_"+objetivo+".joblib")
     
     print(f'Verdaderos positivos (TP): {conf_matrix.total_true_positives*100/conf_matrix.n_samples} %')
     print(f'Verdaderos negativos (TN): {conf_matrix.total_true_negatives*100/conf_matrix.n_samples} %')

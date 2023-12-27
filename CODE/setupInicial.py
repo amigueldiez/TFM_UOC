@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Dec 26 10:26:45 2023
-
 @author: pmartinez
 """
 

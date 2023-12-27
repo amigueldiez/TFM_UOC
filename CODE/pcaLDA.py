@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Dec 10 11:51:09 2023
-
 @author: pablo
 """
 
@@ -37,7 +35,7 @@ def pca2D(dataset, numPC=2):
     plt.xlabel("PCA1", fontsize=20 )
     plt.ylabel("PCA2", fontsize=20 )
     plt.scatter(principalDf["PC_1"],principalDf["PC_2"])
-    plt.title(f"PCA - Componentes: {pca.n_components} - Varianza explicada: {sum(pca.explained_variance_ratio_)}", fontsize=30 )
+    plt.title(f"PCA - Componentes: {pca.n_components} - Varianza explicada: {round(sum(pca.explained_variance_ratio_)*100,2)} %", fontsize=30 )
     plt.tight_layout()
     plt.savefig("OUT/PLOTS/PCA.png", dpi=300, bbox_inches='tight')
     plt.show()
@@ -50,7 +48,7 @@ def pca2D(dataset, numPC=2):
         plt.xlabel("PCA1", fontsize=20 )
         plt.ylabel("PCA2", fontsize=20 )
         plt.scatter(principalDf["PC_1"],principalDf["PC_2"], c=LabelEncoder().fit_transform(cat[columna]))
-        plt.title(f"PCA VS {columna} - Componentes: {pca.n_components} - Varianza explicada: {sum(pca.explained_variance_ratio_)}", fontsize=30 )
+        plt.title(f"PCA VS {columna} - Componentes: {pca.n_components} - Varianza explicada: {round(sum(pca.explained_variance_ratio_)*100,2)} %", fontsize=30 )
         plt.legend(labels=leyenda,loc="upper left", fontsize=20 )
         plt.tight_layout()
         plt.savefig("OUT/PLOTS/PCA_"+columna+".png", dpi=300, bbox_inches='tight')
@@ -84,7 +82,7 @@ def lda2D(dataset, numC=2):
         plt.ylabel("LDA2", fontsize=20 )
         leyenda=cat[columna].unique()
         plt.scatter(principalDf["LD_1"],principalDf["LD_2"], c=LabelEncoder().fit_transform(y))
-        plt.title(f"LDA VS {columna} - Componentes: {lda.n_components} - Varianza explicada: {sum(lda.explained_variance_ratio_)}", fontsize=30 )
+        plt.title(f"LDA VS {columna} - Componentes: {lda.n_components} - Varianza explicada: {round(sum(lda.explained_variance_ratio_)*100,2)} %", fontsize=30 )
         plt.legend(labels=leyenda,loc="upper left", fontsize=20 )
         plt.tight_layout()
         plt.savefig("OUT/PLOTS/LDA_"+columna+".png", dpi=300, bbox_inches='tight')
