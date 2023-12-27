@@ -32,7 +32,8 @@ Actualmente, este repositorio contiene:
   - transformarEDA.py: se encarga de todas las operaciones relacionadas con el tratamiento de los datos y el Análisis Exploratorio.
   - pcaLDA.py: técnicas de reducción de dimensionalidad PCA y LDA.
   - afinadoHiperparametros: se hace un primer afinado de los modelos a emplear (regresión logística (RL), Naive-Bayes (NB) y árbol de decisión (DT).
-  - StreamRiver.py: simula el stream de datos e implementa los diferentes modelos y métodos de data streaming.
+  - streamRiver.py: simula el stream de datos e implementa los diferentes modelos y métodos de data streaming.
+  - plotPerformance.py: permite hacer un gráfico dinámico para controlar el rendimiento de los modelos en streaming en base a una de las métricas.
 
 ## Dataset Empleado: 
 Para el presente TFM, se ha empleado el dataset Time-series Industrial Anomaly dataset (TiNA), un conjunto de datos de series temporales para detección de anomalías dentro de un contexto industrial. El conjunto de datos contiene información de sensórica de una máquina de minería perteneciente a la compañía ArcelorMittal.
