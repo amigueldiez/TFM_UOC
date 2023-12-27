@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Created on Sat Dec 16 11:32:13 2023
+
 @author: pablo
 """
 import setupInicial
@@ -14,7 +16,7 @@ import os
 import pandas as pd
 
 github_url = 'https://github.com/ari-dasci/OD-TINA'
-github_token = ''
+github_token = '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'
 
 #%%
 
@@ -118,7 +120,7 @@ if __name__ == '__main__':
 
     flujo, w_size=streamRiver.modoTrabajo(seleccion)
     #objetivos=["m_id","alarms","m_subid"]
-    objetivos=["m_id"]
+    objetivo="m_id"
     for objetivo in objetivos:
         modeloRL, matrizConfusionRL=streamRiver.modeloLogistico(flujo, objetivo)
         modeloNB, matrizConfusionNB=streamRiver.modeloProbabilistico(flujo, objetivo)

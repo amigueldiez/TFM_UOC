@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Created on Sat Dec 16 12:01:11 2023
+
 @author: pablo
 """
 
@@ -8,6 +10,7 @@ import pandas as pd
 import os
 from river import stream, preprocessing, compose, linear_model, multiclass, metrics, naive_bayes, tree
 import itertools
+import plotPerformance
 
 #%%
 
@@ -15,15 +18,13 @@ def modoTrabajo(modo):
     if modo=="individual":
         w_size=600
         print("Trabajando con datos individuales.")
-        files_in_local=os.listdir()    
-        files_in_local=[i for i in files_in_local if i.endswith(".csv")]
-        if "datos_agregados.csv" in files_in_local:
-            files_in_local.remove("datos_agregados.csv")
+        files_in_local=os.listdir("IN/")    
+        files_in_local=["IN/"+i for i in files_in_local if i.endswith(".csv")]
         return files_in_local, w_size
     elif modo=="agrupado":
         w_size=120
         print("Trabajando con datos agregados.")
-        return ['datos_agregados.csv'], w_size
+        return ['PROCESS/datos_agregados.csv'], w_size
     else:
         print("Selecciona una fuente de datos correcta.")
         return None
@@ -98,6 +99,7 @@ def modeloLogistico(files, objetivo, admite_cualitativo=False):
 def modeloProbabilistico(files, objetivo, admite_cualitativo=False):
     
     print(f"MODELO PROBABILÍSTICO - {objetivo.upper()}")
+    grafica=plotPerformance.plotMetrica("MODELO PROBABILÍSTICO - "+objetivo.upper(), "accuracy")
     
     scaler = preprocessing.MinMaxScaler()
 
@@ -115,7 +117,9 @@ def modeloProbabilistico(files, objetivo, admite_cualitativo=False):
 
             features = extract_features(data_point, admite_cualitativo)
             
-            features = scaler.learn_one(features).transform_one(features)
+            scaler.learn_one(features)
+            
+            features = scaler.transform_one(features)
     
             target = get_target(data_point, objetivo)
             
@@ -128,12 +132,18 @@ def modeloProbabilistico(files, objetivo, admite_cualitativo=False):
                 conf_matrix.update(target, y_pred)
                 acc.update(target, y_pred)
             if count % 10000==0:
+                
                 print(f'Accuracy para {file} - Objetivo: {objetivo.upper()}: {acc.get()} - Muestras analizadas: {muestras_analizadas + count}')
+            if ((count >0) and (count % 10000==0)):
+                grafica.process_data_point(count, acc.get())
+        
         muestras_analizadas=muestras_analizadas + count
+        grafica.process_data_point(count, acc.get())
                 
         print(f'Accuracy final para {file} - Objetivo: {objetivo.upper()}: {acc.get()}')
                 
     print(f'Accuracy final modelo - Objetivo: {objetivo.upper()}: {acc.get()}')
+    grafica.process_data_point(count, acc.get())
     
     print(f'Verdaderos positivos (TP): {conf_matrix.total_true_positives*100/conf_matrix.n_samples} %')
     print(f'Verdaderos negativos (TN): {conf_matrix.total_true_negatives*100/conf_matrix.n_samples} %')
