@@ -34,6 +34,7 @@ Actualmente, este repositorio contiene:
   - afinadoHiperparametros: se hace un primer afinado de los modelos a emplear (regresión logística (RL), Naive-Bayes (NB) y árbol de decisión (DT).
   - streamRiver.py: simula el stream de datos e implementa los diferentes modelos y métodos de data streaming.
   - plotPerformance.py: permite hacer un gráfico dinámico para controlar el rendimiento de los modelos en streaming en base a una de las métricas.
+  - driftGeneration.py: contiene una clase para generar drift de forma artificial, bien introduciendo ruído, bien cruzando entre sí diferentes variables.
 
 ## Dataset Empleado: 
 Para el presente TFM, se ha empleado el dataset Time-series Industrial Anomaly dataset (TiNA), un conjunto de datos de series temporales para detección de anomalías dentro de un contexto industrial. El conjunto de datos contiene información de sensórica de una máquina de minería perteneciente a la compañía ArcelorMittal.
