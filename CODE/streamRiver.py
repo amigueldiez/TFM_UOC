@@ -11,6 +11,10 @@ import itertools
 import plotPerformance
 import joblib
 
+import reloxo
+import driftGeneration
+
+
 #%%
 
 def modoTrabajo(modo):
@@ -19,11 +23,15 @@ def modoTrabajo(modo):
         print("Trabajando con datos individuales.")
         files_in_local=os.listdir("IN/")    
         files_in_local=["IN/"+i for i in files_in_local if i.endswith(".csv")]
-        return files_in_local, w_size
+        iterPrint=25000
+        dur_drift=300000
+        return files_in_local, w_size, iterPrint, dur_drift
     elif modo=="agrupado":
         w_size=120
         print("Trabajando con datos agregados.")
-        return ['PROCESS/datos_agregados.csv'], w_size
+        iterPrint=2000
+        dur_drift=5000
+        return ["PROCESS/datos_agregados.csv"], w_size, iterPrint, dur_drift
     else:
         print("Selecciona una fuente de datos correcta.")
         return None
@@ -50,151 +58,141 @@ def get_target(data, target):
     y=y[target]
     return y
     #return list(y.values())[0]
-
-def modeloLogistico(files, objetivo, admite_cualitativo=False):
     
-    print(f"MODELO LOGÍSTICO - {objetivo.upper()}")
-
-    model = preprocessing.StandardScaler() | multiclass.OneVsRestClassifier(linear_model.LogisticRegression())
-
-    acc = metrics.Accuracy()
-    conf_matrix=metrics.ConfusionMatrix()
-    muestras_analizadas=0
-
-    for file in files:
-        # Simular iteración
-        dataset = stream.iter_csv(file)
-    
-        for count,data_point in enumerate(dataset):
-
-            features = extract_features(data_point, admite_cualitativo)
-    
-            target = get_target(data_point, objetivo)
-            
-            #target = 'OK' if target == 'none' else target
-                
-            y_pred = model.predict_one(features)
-    
-            model.learn_one(features, target)
-            
-            if count >0:
-                conf_matrix.update(target, y_pred)
-                acc.update(target, y_pred)
-            if count % 10000==0:
-                print(f'Accuracy para {file} - Objetivo: {objetivo.upper()}: {acc.get()} - Muestras analizadas: {muestras_analizadas + count}')
-        muestras_analizadas=muestras_analizadas + count
-                
-        print(f'Accuracy final para {file} - Objetivo: {objetivo.upper()}: {acc.get()}')
-                
-    print(f'Accuracy final modelo - Objetivo: {objetivo.upper()}: {acc.get()}')
-    
-    print(f'Verdaderos positivos (TP): {conf_matrix.total_true_positives*100/conf_matrix.n_samples} %')
-    print(f'Verdaderos negativos (TN): {conf_matrix.total_true_negatives*100/conf_matrix.n_samples} %')
-    print(f'Falsos positivos (FP): {conf_matrix.total_false_positives*100/conf_matrix.n_samples} %')
-    print(f'Falsos negativos (FN): {conf_matrix.total_false_negatives*100/conf_matrix.n_samples} %')
-
-    return model, conf_matrix
-
-def modeloProbabilistico(files, objetivo, admite_cualitativo=False):
-    
-    print(f"MODELO PROBABILÍSTICO - {objetivo.upper()}")
-    grafica=plotPerformance.plotMetrica("MODELO PROBABILÍSTICO - "+objetivo.upper(), "accuracy")
-    
-    scaler = preprocessing.MinMaxScaler()
-
-    model = naive_bayes.MultinomialNB()
-
-    acc = metrics.Accuracy()
-    conf_matrix=metrics.ConfusionMatrix()
-    muestras_analizadas=0
-
-    for file in files:
-        # Simular iteración
-        dataset = stream.iter_csv(file)
-    
-        for count,data_point in enumerate(dataset):
-
-            features = extract_features(data_point, admite_cualitativo)
-            
-            scaler.learn_one(features)
-            
-            features = scaler.transform_one(features)
-    
-            target = get_target(data_point, objetivo)
-            
-            #target = 'OK' if target == 'none' else target
-                
-            model.learn_one(features, target)
-            
-            if count >0:
-                y_pred = model.predict_one(features)
-                conf_matrix.update(target, y_pred)
-                acc.update(target, y_pred)
-            if count % 10000==0:
-                
-                print(f'Accuracy para {file} - Objetivo: {objetivo.upper()}: {round(acc.get(),2)} - Muestras analizadas: {muestras_analizadas + count}')
-            if ((count >0) and (count % 10000==0)):
-                grafica.process_data_point(count, acc.get())
+def selectorModelo(modelo, objetivo, tipo_drift, duracion_drift):
+    if tipo_drift=="ALEATORIO":
+        var=100
+    elif tipo_drift=="CRUCE":
+        var=100
+    else:
+        var=0
+    if modelo=="RL":
+        admite_cualitativo=False
+        scaler=None
+        model = preprocessing.StandardScaler() | multiclass.OneVsRestClassifier(linear_model.LogisticRegression())
+        drift=aplicarDrift(tipo_drift, var, duracion_drift)
+        return scaler, model, admite_cualitativo, drift
+    elif modelo=="NB":
+        admite_cualitativo=False
+        scaler = preprocessing.MinMaxScaler()
+        model = naive_bayes.MultinomialNB()
+        drift=aplicarDrift(tipo_drift, var, duracion_drift)
+        return scaler, model, admite_cualitativo, drift
+    elif modelo=="DT":
+        admite_cualitativo=False
+        #admite_cualitativo=True
+        scaler=None
+        model = tree.HoeffdingTreeClassifier()
+        drift=aplicarDrift(tipo_drift, var, duracion_drift)
+        return scaler, model, admite_cualitativo, drift
+    else:
+        print("INTRODUZCA UN MODELO CORRECTO.")
+        return None
         
-        muestras_analizadas=muestras_analizadas + count
-        grafica.process_data_point(count, acc.get())
+    #seleccion de métricas según objetivo cuantitativo o cualtitativo (y binario o multilevel)?
+    #acc = metrics.Accuracy()
+    #conf_matrix=metrics.ConfusionMatrix()
+    
+#def aplicarDrift(tipo, num_var, duracion):
+def aplicarDrift(tipo, num_var, duracion):
+    if tipo==None:
+        print("NO SE GENERA DRIFT")
+        return None
+    elif tipo=="ALEATORIO":
+        print("GENERA DRIFT ALEATORIO")
+        ruido=driftGeneration.randomDrift(num_var,0.9, duracion)
+        return ruido
+    elif tipo=="CRUCE":
+        print("GENERA DRIFT CRUZADO")
+        ruido=driftGeneration.crossDrift(num_var, duracion)
+        return ruido
+    else:
+        print("INTRODUZCA UN MODELO DE DRIFT CORRECTO.")
+        return None
+
+def streaming(files, algoritmo, objetivo, drift_artificial=None, dur_drift=0, it=10000):
+    
+    #llamar selector
+    mod=selectorModelo(algoritmo, objetivo, drift_artificial, dur_drift)
+    if mod is not None:
+        tempo=reloxo.ElapsedTimer()
+        print(f"MODELO {algoritmo} - {objetivo.upper()} - {tempo.current_time()}")
         
+        #metricas
+        acc = metrics.Accuracy()
+        conf_matrix=metrics.ConfusionMatrix()
+        
+        #modelo
+        model=mod[1]
+        
+        #escalado        
+        scaler=mod[0]
+
+        
+        #drift articial
+        drift=mod[3]    
+    
+        
+        #grafica dinamica    
+        grafica=plotPerformance.plotMetrica(f"MODELO {algoritmo} - "+objetivo.upper(), "accuracy")
+    
+        muestras=0
+    
+        for file in files:
+            # Simular iteración
+            dataset = stream.iter_csv(file)
+        
+            for data_point in dataset:
                 
-        print(f'Accuracy final para {file} - Objetivo: {objetivo.upper()}: {round(acc.get(),2)}')
+                features = extract_features(data_point, mod[2])
                 
-    print(f'Accuracy final modelo - Objetivo: {objetivo.upper()}: {round(acc.get(),2)}')
-    grafica.process_data_point(count, acc.get())
-    grafica.save_plot("streaming_NB_"+objetivo)
-    joblib.dump(model,"OUT/MODELS/streaming_NB_"+objetivo+".joblib")
-    
-    print(f'Verdaderos positivos (TP): {conf_matrix.total_true_positives*100/conf_matrix.n_samples} %')
-    print(f'Verdaderos negativos (TN): {conf_matrix.total_true_negatives*100/conf_matrix.n_samples} %')
-    print(f'Falsos positivos (FP): {conf_matrix.total_false_positives*100/conf_matrix.n_samples} %')
-    print(f'Falsos negativos (FN): {conf_matrix.total_false_negatives*100/conf_matrix.n_samples} %')
-
-    return model, conf_matrix
-
-def modeloArbol(files, objetivo, admite_cualitativo=True):
-    
-    print(f"MODELO DT - {objetivo.upper()}")
-    #model = preprocessing.StandardScaler() | tree.HoeffdingTreeClassifier()
-    model = tree.HoeffdingTreeClassifier()
-
-    acc = metrics.Accuracy()
-    conf_matrix=metrics.ConfusionMatrix()
-    muestras_analizadas=0
-
-    for file in files:
-        # Simular iteración
-        dataset = stream.iter_csv(file)
-    
-        for count,data_point in enumerate(dataset):
-
-            features = extract_features(data_point, admite_cualitativo)
-    
-            target = get_target(data_point, objetivo)
-                            
-            y_pred = model.predict_one(features)
-    
-            model.learn_one(features, target)
+                if drift is not None:
+                    if drift.activated:
+                
+                        features=drift.addNoise(features)
+                
+                if scaler is not None:
+                
+                    scaler.learn_one(features)
+                
+                    features = scaler.transform_one(features)
+        
+                target = get_target(data_point, objetivo)
+                                
+                model.learn_one(features, target)
+                
+                if muestras >0:
+                    y_pred = model.predict_one(features)
+                    conf_matrix.update(target, y_pred)
+                    acc.update(target, y_pred)
+                if muestras % it==0:
+                    print(f'MODELO {algoritmo} - Accuracy para {file} - Objetivo: {objetivo.upper()}: \n \t {round(acc.get(),2)} - Muestras analizadas: {muestras}')
+                if ((muestras >0) and (muestras % it==0)):
+                    grafica.processDataPoint(muestras, acc.get())
+                muestras=muestras + 1
+                if ((muestras==12000) and (drift is not None)):
+                    drift.disparador()
             
-            if count >0:
-                conf_matrix.update(target, y_pred)
-                acc.update(target, y_pred)
-            if count % 10000==0:
-                print(f'Accuracy para {file} - Objetivo: {objetivo.upper()}: {acc.get()} - Muestras analizadas: {muestras_analizadas + count}')
-        muestras_analizadas=muestras_analizadas + count
-                
-        print(f'Accuracy final para {file} - Objetivo: {objetivo.upper()}: {acc.get()}')
-                
-    print(f'Accuracy final modelo - Objetivo: {objetivo.upper()}: {acc.get()}')
+            grafica.processDataPoint(muestras, acc.get())
+            grafica.printFile(muestras, file.split("/")[-1])
+            
+                    
+            print(f'MODELO {algoritmo} - Modelo {algoritmo} - Accuracy final para {file} - Objetivo: {objetivo.upper()}: \n \t {round(acc.get(),2)}')
+                    
+        print(f'Accuracy final MODELO {algoritmo} - Objetivo: {objetivo.upper()}: \n \t {round(acc.get(),2)} - {tempo.elapsed_time()}')
+        
+        if drift is None:
+            grafica.savePlot("streaming_"+algoritmo+"_"+objetivo, round(acc.get(),2), len(files), tempo.elapsed_time(), "No")
+            joblib.dump(model,"OUT/MODELS/streaming_"+algoritmo+"_"+objetivo+".joblib")
+        else:
+            grafica.savePlot("streaming_"+algoritmo+"_"+objetivo+"_dr"+drift_artificial, round(acc.get(),2), len(files), tempo.elapsed_time(),drift_artificial)
+            joblib.dump(model,"OUT/MODELS/streaming_"+algoritmo+"_"+objetivo+"_dr"+drift_artificial+".joblib")
+        
+        print(f'Verdaderos positivos (TP): {conf_matrix.total_true_positives*100/conf_matrix.n_samples} %')
+        print(f'Verdaderos negativos (TN): {conf_matrix.total_true_negatives*100/conf_matrix.n_samples} %')
+        print(f'Falsos positivos (FP): {conf_matrix.total_false_positives*100/conf_matrix.n_samples} %')
+        print(f'Falsos negativos (FN): {conf_matrix.total_false_negatives*100/conf_matrix.n_samples} %')
     
-    print(f'Verdaderos positivos (TP): {conf_matrix.total_true_positives*100/conf_matrix.n_samples} %')
-    print(f'Verdaderos negativos (TN): {conf_matrix.total_true_negatives*100/conf_matrix.n_samples} %')
-    print(f'Falsos positivos (FP): {conf_matrix.total_false_positives*100/conf_matrix.n_samples} %')
-    print(f'Falsos negativos (FN): {conf_matrix.total_false_negatives*100/conf_matrix.n_samples} %')
-
-    return model, conf_matrix
-
-
-
+        return model, conf_matrix
+    
+    

@@ -15,7 +15,7 @@ class ElapsedTimer(object):
         elif sec < (60 * 60):
             return str(round(sec / 60,2)) + " min"
         else:
-            return str(round(sec / (60 * 60)),2) + " hr"
+            return str(round(sec / (60 * 60),2)) + " hr"
     def elapsed_time(self):
         return self.elapsed(time.time() - self.start_time)
     def current_time(self):

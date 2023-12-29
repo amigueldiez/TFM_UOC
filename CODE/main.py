@@ -5,7 +5,7 @@
 
 """
 A veces hay alguna imcompatibilidad entre versiones, si pasa se recomienda:
-pip install seaborn pandas matplotlib numpy --upgrade --user
+pip install --upgrade numpy pandas seaborn matplotlib --user
 """
 
 import setupInicial
@@ -15,6 +15,8 @@ import transformarEDA
 import pcaLDA
 import afinadoHiperparametros
 import streamRiver
+import afinadoHiperparametros2
+
 
 import os
 import pandas as pd
@@ -48,10 +50,7 @@ if __name__ == '__main__':
     files_in_local=[i.split(".")[0] for i in files_in_local if i.endswith(".csv")]
     
     print("INICIO DESCARGA ARCHIVOS...")
-    #revisar límite archivos
-    #
-    #
-    for file in files_in_repo[0:70]:
+    for file in files_in_repo:
         #Checkear si ya está descargado. Por si hay algún problema en la descarga
         if file.split("/")[-2].split("=")[-1] not in files_in_local:
             githubInteraccion.descargar_file(github_url, filepath=file, token=github_token)
@@ -67,7 +66,7 @@ if __name__ == '__main__':
     if "datos_agregados.csv" in files_in_local:
         files_in_local.remove("datos_agregados.csv")
     
-    transformarEDA.agregarDatosTandas(files_in_local, chunk_size=500)
+    transformarEDA.agregarDatosTandas(files_in_local, chunk_size=300)
     print("FIN AGREGACIÓN ARCHIVOS...")
 
 #%% EDA con archivos locales offline
@@ -97,23 +96,21 @@ if __name__ == '__main__':
 #%% Tuning de hiperparámetros
     
     tempo.reset()
-    #objetivos=["m_id","alarms","m_subid"]
+    dataset=pd.read_csv('PROCESS/datos_agregados.csv')
+
+    objetivos=["m_id","alarms","m_subid"]
+    algoritmos=["RL","NB","DT"]
     objetivos=["m_id"]
     
+    modelosAH={}
     for objetivo in objetivos:
-
-        #regresión logística
-        htRL=afinadoHiperparametros.afinadoRL(dataset, objetivo)
-    
-        #regresión NB
-        htNB=afinadoHiperparametros.afinadoNB(dataset, objetivo)
-    
-        #regresión DT
-        htDT=afinadoHiperparametros.afinadoDT(dataset, objetivo)
+        for algoritmo in algoritmos:
+            modelosAH[algoritmo+"_"+objetivo+"_"]=afinadoHiperparametros2.afinado(dataset, objetivo, algoritmo)
+            #streamRiver.streaming(flujo[0:100], algoritmo, objetivo, drift, dur_drift, iterPrint)
     
     print("FIN AFINADO - (%s) " %(tempo.elapsed_time()))
     
-    #recuperables usando joblib.load()
+    #modelos recuperables usando joblib.load()
 
 
 #%% Flujo en Stream
@@ -122,17 +119,20 @@ if __name__ == '__main__':
     #seleccion="individual"
     seleccion="agrupado"
 
-    flujo, w_size=streamRiver.modoTrabajo(seleccion)
-    #objetivos=["m_id","alarms","m_subid"]
+    flujo, w_size, iterPrint, dur_drift=streamRiver.modoTrabajo(seleccion)
+    objetivos=["m_id","alarms","m_subid"]
+    algoritmos=["RL","NB","DT"]
     objetivos=["m_id"]
-    for objetivo in objetivos:
-        #modeloRL, matrizConfusionRL=streamRiver.modeloLogistico(flujo, objetivo)
-        modeloNB, matrizConfusionNB=streamRiver.modeloProbabilistico(flujo, objetivo)
-        #modeloDT, matrizConfusionDT=streamRiver.modeloArbol(flujo, objetivo)
+    drifts=[None,"ALEATORIO","CRUCE"]
+    
+    modelosST={}
+    for drift in drifts:
+        for objetivo in objetivos:
+            for algoritmo in algoritmos:
+                modelosST[algoritmo+"_"+objetivo+"_"+str(drift)]=streamRiver.streaming(flujo[0:100], algoritmo, objetivo, drift, dur_drift, iterPrint)
+                
+    
+
     #si detectaamos uno, no hacemos nada, si detectamos varios seguidos
     #definimos ventana. umbral de ventana
     #anomalía de las entradas, anomalía de las salidas
-
-
-
-
