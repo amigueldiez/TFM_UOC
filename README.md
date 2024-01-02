@@ -32,9 +32,11 @@ Actualmente, este repositorio contiene:
   - transformarEDA.py: se encarga de todas las operaciones relacionadas con el tratamiento de los datos y el Análisis Exploratorio.
   - pcaLDA.py: técnicas de reducción de dimensionalidad PCA y LDA.
   - afinadoHiperparametros: se hace un primer afinado de los modelos a emplear (regresión logística (RL), Naive-Bayes (NB) y árbol de decisión (DT).
-  - streamRiver.py: simula el stream de datos e implementa los diferentes modelos y métodos de data streaming.
+  - streamPropio.py: archivo principal que simula el stream de datos, implementa los diferentes modelos y métodos de data streaming y gestiona la detección y mitigación de anomalías y drift.
   - plotPerformance.py: permite hacer un gráfico dinámico para controlar el rendimiento de los modelos en streaming en base a una de las métricas.
   - driftGeneration.py: contiene una clase para generar drift de forma artificial, bien introduciendo ruído, bien cruzando entre sí diferentes variables.
+  - anomaliaPropio.py: contiene una clase con diferentes detectores de anomalías para su aplicación en Stream.
+  - driftPropio.py: contiene una clase con diferentes dectores de drift para su aplicación en Stream.
 
 ## Dataset Empleado: 
 Para el presente TFM, se ha empleado el dataset Time-series Industrial Anomaly dataset (TiNA), un conjunto de datos de series temporales para detección de anomalías dentro de un contexto industrial. El conjunto de datos contiene información de sensórica de una máquina de minería perteneciente a la compañía ArcelorMittal.
@@ -48,6 +50,14 @@ Para el presente TFM, se ha empleado el dataset Time-series Industrial Anomaly d
 
 ## Recursos Empleados: 
 El lenguaje empleado es Python junto con la librería River para realizar ML online.
+
+## Ejecución de la solución:
+A falta de generar un 'requirements.txt', en general dentro de un entorno de Anaconda, el usuario solo deberá instalar la librería River **pip install river**.
+Luego en el archivo 'main.py', deberá poner su propio Token de GitHub.
+A veces aparecen ciertas incompatibilidades entre versiones de las librerías empleadas, se solucionan mediante los siguientes comandos (también recogidos en 'main.py'):
+    *pip install --upgrade numpy pandas seaborn matplotlib --user*
+    *pip install --upgrade scipy*
+
 
 ## Enlaces:
 1. [UOC](https://www.uoc.edu/portal/es/index.html)
