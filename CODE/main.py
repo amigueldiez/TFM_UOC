@@ -6,23 +6,23 @@
 """
 A veces hay alguna imcompatibilidad entre versiones, si pasa se recomienda:
 pip install --upgrade numpy pandas seaborn matplotlib --user
+Posteriormente, pasó lo mismo con KSWIN y scipy
+pip install --upgrade scipy
 """
 
 import setupInicial
-import reloxo
 import githubInteraccion
 import transformarEDA
 import pcaLDA
 import afinadoHiperparametros
-import streamRiver
-import afinadoHiperparametros2
+import streamPropio
 
 
 import os
 import pandas as pd
 
 github_url = 'https://github.com/ari-dasci/OD-TINA'
-github_token = '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'
+github_token = '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'
 
 #%%
 
@@ -30,10 +30,9 @@ if __name__ == '__main__':
     
     setupInicial.sistemaCarpetas()
     
-    print("INICIO LISTADO ARCHIVOS... (0 s)")
-    tempo=reloxo.ElapsedTimer()
+    print("INICIO LISTADO ARCHIVOS...")
     files_in_repo = githubInteraccion.listar_files(github_url, token=github_token)
-    print("FIN LISTADO ARCHIVOS... (%s)" % tempo.elapsed_time())
+    print("FIN LISTADO ARCHIVOS")
     
     #leer_files(files_in_repo)
     
@@ -71,8 +70,7 @@ if __name__ == '__main__':
 
 #%% EDA con archivos locales offline
     #EDA
-    tempo.reset()
-    print("EDA - (%s) " %(tempo.current_time()))
+    print("EDA - Análisis exploratorio")
     dataset=pd.read_csv('PROCESS/datos_agregados.csv')
     datosCuantit, datosCualit=transformarEDA.EDA(dataset)
     #print(datosCuantit)
@@ -83,56 +81,75 @@ if __name__ == '__main__':
     transformarEDA.cruceCategorico(dataset)
 
 #%% Reducción dimensionalidad
-    print("PCA - (%s) " %(tempo.current_time()))
+    print("PCA")
     #PCA
-    pca_dataset=pcaLDA.pca2D(dataset,5)
+    pca_dataset=pcaLDA.pca2D(dataset,40)
     
-    print("LDA- (%s) " %(tempo.current_time()))
+    print("LDA")
     #LDA
     lda_dataset=pcaLDA.lda2D(dataset,5)
     
-    print("FIN EDA, PCA y LDA - (%s) " %(tempo.elapsed_time()))
+    print("FIN EDA, PCA y LDA")
     
 #%% Tuning de hiperparámetros
     
-    tempo.reset()
     dataset=pd.read_csv('PROCESS/datos_agregados.csv')
 
     objetivos=["m_id","alarms","m_subid"]
     algoritmos=["RL","NB","DT"]
-    objetivos=["m_id"]
+    objetivos=["alarms","m_subid"]
     
     modelosAH={}
     for objetivo in objetivos:
         for algoritmo in algoritmos:
-            modelosAH[algoritmo+"_"+objetivo+"_"]=afinadoHiperparametros2.afinado(dataset, objetivo, algoritmo)
-            #streamRiver.streaming(flujo[0:100], algoritmo, objetivo, drift, dur_drift, iterPrint)
+            modelosAH[algoritmo+"_"+objetivo+"_"]=afinadoHiperparametros.afinado(dataset, objetivo, algoritmo)
     
-    print("FIN AFINADO - (%s) " %(tempo.elapsed_time()))
+    print("FIN AFINADO")
     
     #modelos recuperables usando joblib.load()
 
 
 #%% Flujo en Stream
 
-    # descarga síncrona con la lectura usando threads? emplear directamente el archivo agregado?
-    #seleccion="individual"
-    seleccion="agrupado"
-
-    flujo, w_size, iterPrint, dur_drift=streamRiver.modoTrabajo(seleccion)
-    objetivos=["m_id","alarms","m_subid"]
-    algoritmos=["RL","NB","DT"]
-    objetivos=["m_id"]
-    drifts=[None,"ALEATORIO","CRUCE"]
+    #archivos a emplear
     
+    #seleccionDatos="individual"
+    seleccionDatos="agrupado"
+    
+    #configuracion streaming
+    _fin_train =0.7 # apartir del 70 % deja de entrenar, empieza "test"
+    _it_anomalia=0.5 # a partir del 50% detecta anomalias
+    #_it_drift=0.4
+    _it_drift=0.4 # a partir del 80% arranca drift artificiañ
+    _dur_drift=0.2
+    #Ìdur drift se puede dar en porcentual
+    _n_var_driftAL=100
+    _noise_driftAL=0.9
+    _n_var_driftCR=80
+    _algoritmoAnomalia="HST" #["HST","LOF","OCSVM", None]
+    _umbral_deteccion=0.75
+    _algoritmo_drift="PH" #["ADWIN","KSWIN","PH"]
+    #_wsize=3000
+    _consigna_drift="nuevo" #["reentrenar","nuevo", None]
+    
+    #algoritmos=["RL","NB","DT"]
+    algoritmos=["NB","DT"]
+    #algoritmos=["NB"]
+    #objetivos=["m_id","alarms","m_subid"]
+    objetivos=["m_id"]
+    #drifts_artificiales=[None,"ALEATORIO","CRUCE"]
+    drifts_artificiales=[None]
+
     modelosST={}
-    for drift in drifts:
+    for drift_generado in drifts_artificiales:
         for objetivo in objetivos:
             for algoritmo in algoritmos:
-                modelosST[algoritmo+"_"+objetivo+"_"+str(drift)]=streamRiver.streaming(flujo[0:100], algoritmo, objetivo, drift, dur_drift, iterPrint)
-                
-    
-
-    #si detectaamos uno, no hacemos nada, si detectamos varios seguidos
-    #definimos ventana. umbral de ventana
-    #anomalía de las entradas, anomalía de las salidas
+                #creacion
+                st=streamPropio.streamModel(modoDatos=seleccionDatos, aplicar_drift=drift_generado,
+                                            algoritmo=algoritmo, objetivo=objetivo)
+                #config
+                st.parametrosConfig(_fin_train, _it_anomalia, _it_drift, _dur_drift,_n_var_driftAL,
+                         _noise_driftAL, _n_var_driftCR, _algoritmoAnomalia, 
+                         _umbral_deteccion, _algoritmo_drift, consigna_drift=_consigna_drift)
+                #ejecucion
+                modelosST[algoritmo+"_"+objetivo+"_"+str(drift_generado)]=st.ejecucion()

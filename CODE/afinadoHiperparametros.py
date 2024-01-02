@@ -22,7 +22,7 @@ def seleccionModelo (algoritmo):
     if algoritmo=="RL":
         model= LogisticRegression(multi_class='ovr', max_iter=10000)
         scaler=None
-        parameters = {'C':[0.1,0.5,1,2,5,10,12,15,25]}
+        parameters = {'C':[0.1,0.5,1,2,5,10,12,15]}
         return model, parameters, scaler
     elif algoritmo=="NB":
         model= MultinomialNB()
@@ -37,7 +37,6 @@ def seleccionModelo (algoritmo):
     else:
         print("INTRODUZCA UN MODELO CORRECTO.")
         return None, None, None
-    
     
 
 def afinado(dataset, objetivo, algoritmo):

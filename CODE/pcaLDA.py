@@ -10,6 +10,7 @@ from sklearn.decomposition import PCA
 #from matplotlib.pyplot import cm
 from sklearn.preprocessing import LabelEncoder
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+import joblib
 
   
 #%% PCA      
@@ -37,7 +38,7 @@ def pca2D(dataset, numPC=2):
     plt.scatter(principalDf["PC_1"],principalDf["PC_2"])
     plt.title(f"PCA - Componentes: {pca.n_components} - Varianza explicada: {round(sum(pca.explained_variance_ratio_)*100,2)} %", fontsize=30 )
     plt.tight_layout()
-    plt.savefig("OUT/PLOTS/PCA.png", dpi=300, bbox_inches='tight')
+    plt.savefig("OUT/PLOTS/PCA_c"+str(pca.n_components)+".png", dpi=300, bbox_inches='tight')
     plt.show()
     
     for columna in cat.columns:
@@ -51,8 +52,9 @@ def pca2D(dataset, numPC=2):
         plt.title(f"PCA VS {columna} - Componentes: {pca.n_components} - Varianza explicada: {round(sum(pca.explained_variance_ratio_)*100,2)} %", fontsize=30 )
         plt.legend(labels=leyenda,loc="upper left", fontsize=20 )
         plt.tight_layout()
-        plt.savefig("OUT/PLOTS/PCA_"+columna+".png", dpi=300, bbox_inches='tight')
+        plt.savefig("OUT/PLOTS/PCA_c"+str(pca.n_components)+"_"+columna+".png", dpi=300, bbox_inches='tight')
         plt.show()
+    joblib.dump(pca,"OUT/MODELS/PCA_c"+str(pca.n_components)+".joblib")
     return pca
     
     
@@ -64,6 +66,7 @@ def lda2D(dataset, numC=2):
     
     # Separating out the target
     cat = dataset.select_dtypes(include=['object'])
+    ldas={}
     
     # Standardizing the features
     x = StandardScaler().fit_transform(num)
@@ -85,6 +88,9 @@ def lda2D(dataset, numC=2):
         plt.title(f"LDA VS {columna} - Componentes: {lda.n_components} - Varianza explicada: {round(sum(lda.explained_variance_ratio_)*100,2)} %", fontsize=30 )
         plt.legend(labels=leyenda,loc="upper left", fontsize=20 )
         plt.tight_layout()
-        plt.savefig("OUT/PLOTS/LDA_"+columna+".png", dpi=300, bbox_inches='tight')
+        plt.savefig("OUT/PLOTS/LDA_c"+str(lda.n_components)+"_"+columna+".png", dpi=300, bbox_inches='tight')
         plt.show()
+        joblib.dump(lda,"OUT/MODELS/LDA_c"+str(lda.n_components)+".joblib")
+        ldas[columna]=lda
+    return ldas
     

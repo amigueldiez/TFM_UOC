@@ -78,6 +78,6 @@ class crossDrift:
         print("TERMINA DRIFT CRUCE VARIABLES.")
         
     def disparador(self):
-        #Aquí estaría bien preparar un disparo aleatorio
+        #Aquí estaría bien preparar un disparo aleatorio, una vez que se inicializa.
         self.activated=True
         print("ARRANCA DRIFT CRUCE VARIABLES.")

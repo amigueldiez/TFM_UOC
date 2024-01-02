@@ -7,8 +7,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import seaborn as sns
+import joblib
 
 import reloxo
+
 
 
 #%% Agregación
@@ -145,6 +147,16 @@ def EDA(dataset):
         if (n+1)%3==0 and n>0:
             plt.savefig("OUT/PLOTS/EDA_sTemporal_"+str(n//3)+".png", dpi=300)
     plt.savefig("OUT/PLOTS/EDA_sTemporal_"+str(n//3)+".png", dpi=300)
+    
+    #matriz correlacion cuantitativas
+    matriz_correlacion =cuantitativa.corr()
+    plt.figure(figsize=(30, 30))
+    plt.tight_layout()
+    sns.heatmap(matriz_correlacion, cmap="crest").set(title="Matriz Correlación Cuantitativas")
+    plt.savefig("OUT/PLOTS/EDA_correlacion_cuantitativas.png", dpi=300)
+    plt.show()
+    joblib.dump(cuantitativa,"OUT/MODELS/EDAcuantitativos.joblib")
+    joblib.dump(cualitativa,"OUT/MODELS/EDAcualitativos.joblib")
     return cuantitativa, cualitativa   
 
 

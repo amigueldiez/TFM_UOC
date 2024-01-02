@@ -33,12 +33,28 @@ class plotMetrica:
         
         self.updatePlot()
     
-    def plotAnomaly(self, it):
-        self.axs.axvline(x=it, color='red', linestyle='-')
+    def plotAnomalyDetected(self, it):
+        self.axs.axvline(x=it, ymax=0.2, color='red', linestyle='-')
         self.updatePlot()
         
-    def plotDrift(self, it):
+    def plotDriftDetected(self, it):
+        self.axs.axvline(x=it, ymax=0.2, color='gold', linestyle='-')
+        self.updatePlot()
+        
+    def plotDriftStart(self, it):
+        self.axs.axvline(x=it, color='orange', linestyle='-')
+        self.updatePlot()
+        
+    def plotDriftEnd(self, it):
         self.axs.axvline(x=it, color='orange', linestyle='-.')
+        self.updatePlot()
+        
+    def plotTrain(self, it):
+        self.axs.axvline(x=it, color='green', linestyle='-')
+        self.updatePlot()
+        
+    def plotTest(self, it):
+        self.axs.axvline(x=it, color='green', linestyle='-.')
         self.updatePlot()
         
     def printFile(self, it, txt):

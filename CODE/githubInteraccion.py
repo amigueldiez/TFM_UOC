@@ -13,6 +13,7 @@ import os
 
 
 def listar_files(repo_url, path='', token=''):
+    tempo=reloxo.ElapsedTimer()
     api_url = f"{repo_url.rstrip('/').replace('github.com', 'api.github.com/repos')}/contents/{path}"
     headers = {'Authorization': f'token {token}'}
     response = requests.get(api_url, headers=headers)
@@ -23,6 +24,7 @@ def listar_files(repo_url, path='', token=''):
                 files.append(file_info['path'])
             elif file_info['type'] == 'dir':
                 files += listar_files(repo_url, file_info['path'], token)
+        print("ARCHIVO LISTADO...(%s)" % (tempo.elapsed_time()))
         return files
     else:
         print(f"Fallo. Status code: {response.status_code}")
