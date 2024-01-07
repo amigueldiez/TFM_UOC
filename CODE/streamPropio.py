@@ -9,6 +9,7 @@ from river import stream, preprocessing, compose, linear_model, multiclass, metr
 import itertools
 import plotPerformance
 import joblib
+from river import optim
 
 import reloxo
 import driftGeneration
@@ -35,12 +36,11 @@ class streamModel:
         
         self.admite_cualitativo=False
         
-        #self.modalidad=modalidad #◘cuantitativo o cualitativo
+        #self.modalidad=modalidad #cuantitativo o cualitativo
         #self.tipo_reentrenamiento=tipo_reentrenamiento
         
         self.iterPrint=0
         self.fin_train=0
-        self.it_anomalia=0
         self.it_drift=0
         self.dur_drift=0
         self.n_var_driftCR=0
@@ -52,7 +52,7 @@ class streamModel:
         self.w_size=0
         self.consigna_drift=None
     
-    def parametrosConfig(self, fin_train, it_anomalia=30000, it_drift=80000, dur_drift=10000,n_var_driftAL=90,
+    def parametrosConfig(self, fin_train, it_drift=80000, dur_drift=10000,n_var_driftAL=90,
                          noise_driftAL=0.8, n_var_driftCR=50, algoritmoAnomalia=None,  
                          umbral_deteccion=None, algoritmo_drift=None, wsize_adwin=3000, consigna_drift=None):
         if self.num_datos <200_000:
@@ -65,10 +65,8 @@ class streamModel:
             self.iterPrint=int(self.num_datos*0.15) 
         
         self.fin_train=int(fin_train*self.num_datos)
-        #anomalias
-        self.it_anomalia=int(it_anomalia*self.num_datos) #inicio deteccion anomalia
         #generacion drift
-        self.it_drift=int(it_drift*self.num_datos)+1 #inicio drift
+        self.it_drift=[int(i*self.num_datos)+1 for i in it_drift] #inicio drift
         self.dur_drift=int(dur_drift*self.num_datos) #duracion drift
         self.n_var_driftCR=n_var_driftCR
         self.noise_driftAL=noise_driftAL
@@ -132,8 +130,9 @@ class streamModel:
         #params=self.leerHiperparametros(modelo, objetivo)
         if modelo=="RL":
             self.admite_cualitativo=False
+            optimizer = optim.SGD(0.1)
             scaler=None
-            model = compose.Pipeline(preprocessing.StandardScaler(), multiclass.OneVsRestClassifier(linear_model.LogisticRegression()))
+            model = compose.Pipeline(preprocessing.StandardScaler(), multiclass.OneVsRestClassifier(linear_model.LogisticRegression(optimizer)))
             return scaler, model
         elif modelo=="NB":
             self.admite_cualitativo=False
@@ -155,42 +154,47 @@ class streamModel:
         #conf_matrix=metrics.ConfusionMatrix()
         
     
-    def actuacionDrift(self, consigna, muestra, modelo, grafica):
+    def actuacionDrift(self, consigna, muestra, modelo, grafica, detectorAN, detectorDR):
         if consigna=="reentrenar":
-            print("Detectado drift. Se reentrena.")
+            print("Detectado drift. Consigna: reentrenar.")
             muestras_restantes = self.num_datos - muestra
             if muestras_restantes >100_000:
                 self.fin_train=muestra +50_000
                 return modelo, 50_000
             elif muestra <0.89*self.num_datos:
                 self.fin_train=muestra + int(0.5*muestras_restantes)
-                return modelo, int(0.1*muestras_restantes)
+                return modelo, int(0.1*muestras_restantes), detectorAN, detectorDR
             else:
                 print("Queda menos del 10% de datos no se reentrena.")
-                return modelo, 0
-            
+                return modelo, 0, detectorAN, detectorDR
         elif consigna=="nuevo":
-            print("Detectado drift. Se genera un nuevo modelo.")
+            print("Detectado drift. Consgina: nuevo modelo.")
             muestras_restantes = self.num_datos - muestra
             if muestras_restantes >100_000:
                 self.modelos[self.n_modelo]=modelo
                 self.n_modelo=self.n_modelo+1
                 _, modelo=self.selectorModelo(self.algoritmo, self.objetivo)
+                #reiniciar detectores       
+                detectorAN=anomaliaPropio.anomalyDetection(self.algoritmoAnomalia, self.umbral_deteccion)
+                
+                detectorDR=driftPropio.driftDetection(self.algoritmo_drift)
                 self.fin_train=muestra +50_000
                 grafica.plotTrain(muestra)
-                return modelo, 50_000
+                return modelo, 50_000, detectorAN, detectorDR
             elif muestra <0.89*self.num_datos:
                 self.modelos[self.n_modelo]=modelo
                 self.n_modelo=self.n_modelo+1
                 _, modelo=self.selectorModelo(self.algoritmo, self.objetivo)
+                detectorAN=anomaliaPropio.anomalyDetection(self.algoritmoAnomalia, self.umbral_deteccion)
+                detectorDR=driftPropio.driftDetection(self.algoritmo_drift)
                 self.fin_train=muestra + int(0.5*muestras_restantes)
                 grafica.plotTrain(muestra)
-                return modelo, int(0.5*muestras_restantes)
+                return modelo, int(0.5*muestras_restantes), detectorAN, detectorDR
             else:
                 print("Queda menos del 10% de datos no se genera nuevo modelo.")
-                return modelo, 0
+                return modelo, 0, detectorAN, detectorDR
         else:
-            return modelo, 0
+            return modelo, 0, detectorAN, detectorDR
     
     def valorNumerico(self, valor):
         try:
@@ -198,7 +202,7 @@ class streamModel:
         except:
             return valor
 
-    def extract_features(self, data, admite_cualitativo):
+    def extractFeatures(self, data, admite_cualitativo):
         X=dict(itertools.islice(data[0].items(), len(data[0])-3))
         if not self.admite_cualitativo:
             X.pop("FEATURE76")
@@ -207,7 +211,7 @@ class streamModel:
         X.update((k, self.valorNumerico(v)) for k, v in X.items())
         return X
 
-    def get_target(self, data, target):
+    def getTarget(self, data, target):
         #y=[data[0]["m_id"],data[0]["m_subid"],data[0]["alarms"]]
         #y=dict(itertools.islice(data[0].items(), len(data[0])-1, len(data[0])))
         y=dict(itertools.islice(data[0].items(), len(data[0])-3, len(data[0])))
@@ -226,8 +230,10 @@ class streamModel:
                 print(f"MODELO {self.algoritmo} - {self.objetivo.upper()} - {tempo.current_time()}")
            
                 #metricas. en el futuro selector de métricas en función de tipo de variable
-                acc = metrics.Accuracy()
+                #acc = metrics.Accuracy()
+                acc = metrics.BalancedAccuracy()
                 conf_matrix=metrics.ConfusionMatrix()
+                met=metrics.MacroF1()
            
                 #drift articial
                 drift=self.selectorDrift(self.aplicar_drift)
@@ -244,7 +250,7 @@ class streamModel:
                 hay_drift=False
                 
                 #grafica dinamica    
-                grafica=plotPerformance.plotMetrica(f"MODELO {self.algoritmo} - "+self.objetivo.upper(), "accuracy")
+                grafica=plotPerformance.plotMetrica(f"MODELO {self.algoritmo} - "+self.objetivo.upper(), "balAccuracy", "macroF1")
        
                 muestras=0
                 _fin_train=self.fin_train
@@ -255,7 +261,7 @@ class streamModel:
            
                     for data_point in dataset:
                    
-                        features = self.extract_features(data_point, self.admite_cualitativo)
+                        features = self.extractFeatures(data_point, self.admite_cualitativo)
                         
                         if ((drift is not None) and (drift.activated)):
                         
@@ -267,55 +273,63 @@ class streamModel:
                         
                             features = scaler.transform_one(features)
            
-                        target = self.get_target(data_point, self.objetivo)
+                        target = self.getTarget(data_point, self.objetivo)
                         
                         #entrenamiento y deteccion de anomalías                   
-                        if _fin_train>0:
-                            if detectorAN is not None:
-                                detectorAN.entrenarDetector(features)
-                            if ((muestras > self.it_anomalia) and (detectorAN is not None)):
-                                # se le pasa X, y, y_pred antes de actualizar modelo. para que diga si hay anomalía
-                                hay_anomalia=detectorAN.anomalia_TF(features,target, model.predict_one(features))
-                            else:
-                                hay_anomalia==False
-                            if hay_anomalia==False:
-                                model.learn_one(features, target)
-                            _fin_train=_fin_train-1
-                            if _fin_train==0:
-                                grafica.plotTest(muestras)
+                        if detectorAN is not None:
+                            detectorAN.entrenarDetector(features)
+                        if ((muestras > self.fin_train) and (detectorAN is not None)):
+                            # se le pasa X, y, y_pred antes de actualizar modelo. para que diga si hay anomalía
+                            #test then train
+                            hay_anomalia=detectorAN.anomalia_TF(features,target, model.predict_one(features))
+                        else:
+                            hay_anomalia==False
+                        if hay_anomalia==False:
+                            #entrenamiento del modelo
+                            model.learn_one(features, target)
+                        #se usa para marcar donde empieza la prediccion
+                        _fin_train=_fin_train-1
+                        if _fin_train==0:
+                            grafica.plotTest(muestras)
 
                         
                         if muestras >0:
                             # entrenamiento y detección de drift
                             if detectorDR is not None:
-                                detectorDR.entrenarDetector(detectorAN.anomalia_score(features))
+                                dato_drift=1
+                                if target==model.predict_one(features):
+                                    dato_drift=0
+                                detectorDR.entrenarDetector(dato_drift)
                                 if muestras > self.fin_train:
                                     hay_drift=detectorDR.driftDetectado
                                     if hay_drift:
                                         #grafica.plotDriftDetected(muestras)
                                         #print("Drift Detectado.")
                                         #actuacion en base a drift
-                                        model, _fin_train=self.actuacionDrift(self.consigna_drift, muestras, model, grafica)
-                                    
+                                        model, _fin_train, detectorAN, detectorDR=self.actuacionDrift(self.consigna_drift, muestras, model, grafica, detectorAN, detectorDR)
+                                        hay_drift=False
+                                        hay_anomalia=False
                             
                             y_pred = model.predict_one(features)
-                            conf_matrix.update(target, y_pred)
+                            conf_matrix.update(target, y_pred)                                
                             acc.update(target, y_pred)
+                            if met is not None:
+                                met.update(target, y_pred)
                         if ((muestras >0) and (muestras % self.iterPrint==0)):
                             print(f'MODELO {self.algoritmo} - Accuracy para {file} - Objetivo: {self.objetivo.upper()}: \n \t {round(acc.get(),2)} - Muestras analizadas: {muestras}')
-                            grafica.processDataPoint(muestras, acc.get())
+                            grafica.processDataPoint(muestras, acc.get(),met.get())
 
                         #inicio generacion drift
-                        if ((muestras==self.it_drift) and (drift is not None)):
+                        if ((muestras in self.it_drift) and (drift is not None)):
                             drift.disparador()
                             grafica.plotDriftStart(muestras)
                         #fin generacion drift
                         if drift is not None:
-                            if muestras==(self.it_drift+drift.duracion):
+                            if muestras in [i+drift.duracion for i in self.it_drift]:
                                 grafica.plotDriftEnd(muestras)
                         muestras=muestras + 1
 
-                    grafica.processDataPoint(muestras, acc.get())
+                    grafica.processDataPoint(muestras, acc.get(), met.get())
                     grafica.printFile(muestras, file.split("/")[-1])
                
                        
@@ -325,16 +339,13 @@ class streamModel:
                 #guardar ultimo modelo en dicc
                 self.modelos["MODELO_"+str(self.n_modelo)]=[model, conf_matrix]
                 
-                if drift is None:
-                    grafica.savePlot("streaming_"+self.algoritmo+"_"+self.objetivo, round(acc.get(),2), len(self.files), tempo.elapsed_time(), "No")
-                    joblib.dump(self.modelos,"OUT/MODELS/streaming_"+self.algoritmo+"_"+self.objetivo+".joblib")
+                if met is not None:
+                    grafica.savePlot("streaming_"+self.algoritmo+"_"+self.objetivo+"_dr"+str(self.aplicar_drift),
+                                     [round(acc.get(),2), round(met.get(),2)],
+                                     len(self.files), self.num_datos, tempo.elapsed_time(),str(self.aplicar_drift))
                 else:
-                    grafica.savePlot("streaming_"+self.algoritmo+"_"+self.objetivo+"_dr"+self.aplicar_drift, round(acc.get(),2), len(self.files), tempo.elapsed_time(),self.aplicar_drift)
-                    joblib.dump(self.modelos,"OUT/MODELS/streaming_"+self.algoritmo+"_"+self.objetivo+"_dr"+self.aplicar_drift+".joblib")
-
-                print(f'Verdaderos positivos (TP): {conf_matrix.total_true_positives*100/conf_matrix.n_samples} %')
-                print(f'Verdaderos negativos (TN): {conf_matrix.total_true_negatives*100/conf_matrix.n_samples} %')
-                print(f'Falsos positivos (FP): {conf_matrix.total_false_positives*100/conf_matrix.n_samples} %')
-                print(f'Falsos negativos (FN): {conf_matrix.total_false_negatives*100/conf_matrix.n_samples} %')
+                    grafica.savePlot("streaming_"+self.algoritmo+"_"+self.objetivo+"_dr"+str(self.aplicar_drift),
+                                     round(acc.get(),2), len(self.files), self.num_datos, tempo.elapsed_time(),str(self.aplicar_drift))
+                joblib.dump(self.modelos,"OUT/MODELS/streaming_"+self.algoritmo+"_"+self.objetivo+"_dr"+str(self.aplicar_drift)+".joblib")
 
         return self.modelos, detectorAN.num_anomalias

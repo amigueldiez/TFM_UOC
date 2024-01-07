@@ -97,7 +97,6 @@ if __name__ == '__main__':
 
     objetivos=["m_id","alarms","m_subid"]
     algoritmos=["RL","NB","DT"]
-    objetivos=["alarms","m_subid"]
     
     modelosAH={}
     for objetivo in objetivos:
@@ -117,28 +116,27 @@ if __name__ == '__main__':
     seleccionDatos="agrupado"
     
     #configuracion streaming
-    _fin_train =0.7 # apartir del 70 % deja de entrenar, empieza "test"
-    _it_anomalia=0.5 # a partir del 50% detecta anomalias
-    #_it_drift=0.4
-    _it_drift=0.4 # a partir del 80% arranca drift artificiañ
-    _dur_drift=0.2
+    _fin_train =0.5 # apartir del 70 % deja de entrenar, empieza "test"
+    _it_drift=[0.25,0.8]
+    #_it_drift=0.7 # a partir del 80% arranca drift artificiañ
+    _dur_drift=0.1
     #Ìdur drift se puede dar en porcentual
     _n_var_driftAL=100
     _noise_driftAL=0.9
-    _n_var_driftCR=80
+    _n_var_driftCR=100
     _algoritmoAnomalia="HST" #["HST","LOF","OCSVM", None]
     _umbral_deteccion=0.75
-    _algoritmo_drift="PH" #["ADWIN","KSWIN","PH"]
+    _algoritmo_drift="ADWIN" #[None,"ADWIN","KSWIN","PH"]
     #_wsize=3000
     _consigna_drift="nuevo" #["reentrenar","nuevo", None]
     
     #algoritmos=["RL","NB","DT"]
-    algoritmos=["NB","DT"]
-    #algoritmos=["NB"]
+    #algoritmos=["NB","DT"]
+    algoritmos=["RL"]
     #objetivos=["m_id","alarms","m_subid"]
     objetivos=["m_id"]
-    #drifts_artificiales=[None,"ALEATORIO","CRUCE"]
-    drifts_artificiales=[None]
+    drifts_artificiales=[None,"ALEATORIO","CRUCE"]
+    #drifts_artificiales=[None]
 
     modelosST={}
     for drift_generado in drifts_artificiales:
@@ -148,7 +146,7 @@ if __name__ == '__main__':
                 st=streamPropio.streamModel(modoDatos=seleccionDatos, aplicar_drift=drift_generado,
                                             algoritmo=algoritmo, objetivo=objetivo)
                 #config
-                st.parametrosConfig(_fin_train, _it_anomalia, _it_drift, _dur_drift,_n_var_driftAL,
+                st.parametrosConfig(_fin_train, _it_drift, _dur_drift,_n_var_driftAL,
                          _noise_driftAL, _n_var_driftCR, _algoritmoAnomalia, 
                          _umbral_deteccion, _algoritmo_drift, consigna_drift=_consigna_drift)
                 #ejecucion

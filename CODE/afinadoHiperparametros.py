@@ -13,6 +13,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.tree import DecisionTreeClassifier
 import joblib
+import seaborn as sns
 
 import reloxo
 
@@ -68,10 +69,13 @@ def afinado(dataset, objetivo, algoritmo):
         fig, ax = plt.subplots(figsize=(40,40))
         plt.title("Matriz de Confusión: "+algoritmo+" - " + objetivo)
         plt.tight_layout()
-        disp.plot(ax=ax, cmap="viridis")
+        sns.heatmap(confusion_matrix(y_train, y_pred), cmap="crest")
         plt.xticks(rotation=90)
         plt.savefig("OUT/PLOTS/mConf_"+algoritmo+"_" + objetivo+".png")
         plt.show()
+        
+        plt.figure(figsize=(25, 25))
+        plt.tight_layout()
         
         y_pred=gs.best_estimator_.predict(X_test)
         print("ACCURACY SCORE - TEST: ", round(accuracy_score(y_test, y_pred),2))

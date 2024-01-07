@@ -4,6 +4,8 @@
 """
 import random
 
+random.seed(7)
+
 class randomDrift():
 
     def __init__(self, n_var=10, factor=0.1, duracion=500000):

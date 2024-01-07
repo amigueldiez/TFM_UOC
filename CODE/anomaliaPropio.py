@@ -17,7 +17,7 @@ class anomalyDetection:
         self.num_anomalias=0
         self.detector=None
         
-        self.metric=None
+        self.metric=metrics.ROCAUC()
         
         self.selectorDetector()
         
@@ -25,14 +25,14 @@ class anomalyDetection:
     def selectorDetector(self):
         if self.algoritmo=="HST":
             print("DETECCIÓN ANOMALÍA- ALGORITMO HST")
-            self.detector = compose.Pipeline(preprocessing.MinMaxScaler(), anomaly.HalfSpaceTrees())
+            self.detector = compose.Pipeline(preprocessing.MinMaxScaler(), anomaly.HalfSpaceTrees(seed=7))
         elif self.algoritmo=="LOF":
             print("DETECCIÓN ANOMALÍA- ALGORITMO LOF")
             self.detector = compose.Pipeline(anomaly.LocalOutlierFactor(n_neighbors=15))
         elif self.algoritmo=="OCSVM":
             print("DETECCIÓN ANOMALÍA - ALGORITMO OCSVM")
             self.detector = anomaly.QuantileFilter(anomaly.OneClassSVM(nu=0.5),q=0.995)
-            self.metric=metrics.ROCAUC()
+            
         else:
             print("ANOMALÍA - INTRODUZCA UN ALGORITMO CORRECTO.")
 
@@ -49,17 +49,18 @@ class anomalyDetection:
                 score = self.detector.score_one(x)
                 is_anomaly = self.detector.classify(score)
                 self.metric.update(y==y_pred, is_anomaly)
-                print("AUCROC", self.metric)
                 if is_anomaly:
                     self.num_anomalias=self.num_anomalias+1
                 return is_anomaly
             else:
                 score=self.detector.score_one(x)
                 if score > self.umbral_deteccion:
+                    self.metric.update(y==y_pred, True)
                     self.num_anomalias=self.num_anomalias+1
                     return True
                     
                 else:
+                    self.metric.update(y==y_pred, False)
                     return False
         else:
             return False
@@ -67,6 +68,6 @@ class anomalyDetection:
     def anomalia_score(self, x):
         if self.detector is not None:       
             score=self.detector.score_one(x)
-        return score
+            return score
 
 

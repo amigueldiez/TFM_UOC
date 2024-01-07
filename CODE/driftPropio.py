@@ -19,7 +19,7 @@ class driftDetection:
     def selectorDetector(self):
         if self.detector_drift=="ADWIN":
             print("DETECCIÓN DRIFT - ADWIN")
-            self.detector = drift.ADWIN()
+            self.detector = drift.ADWIN(min_window_length=5000,grace_period=12000 )
         elif self.detector_drift=="KSWIN":
             print("DETECCIÓN DRIFT - KSWIN")
             self.detector = drift.KSWIN()

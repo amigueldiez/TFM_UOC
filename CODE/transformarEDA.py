@@ -192,8 +192,8 @@ def cruceCategorico(datos):
         for j, columnaJ in enumerate(datos.columns):
             if ((columnaI != columnaJ) and (j>=i)):
                 ct=pd.crosstab(index=datos[columnaI],columns=datos[columnaJ])
-                plt.figure(figsize=(20, 20))
-                plt.tight_layout()
+                plt.figure(figsize=(25, 25))
                 sns.heatmap(ct, cmap="crest").set(title=columnaI+ " VS "+columnaJ)
+                plt.tight_layout()
                 plt.savefig("OUT/PLOTS/EDA_cat_"+columnaI+"_VS_"+columnaJ+".png", dpi=300)
 
