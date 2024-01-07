@@ -11,7 +11,7 @@
 <div style="width:100%;">&nbsp;</div>
 
 
-# TFM UOC (Actualmente en ejecución)
+# TFM UOC - Detección en Stream de anomalías y Concept Drift para una máquina industrial
 
 <div class="alert alert-block alert-info">
 <strong>Nombre y apellidos: Pablo Martínez Pavón</strong>
